@@ -1,0 +1,121 @@
+# API Route Standards
+
+## Route Structure
+
+- Use versioned API routes: `/api/v1/`
+- Follow RESTful conventions
+- Place routes in [src/app/api/](mdc:src/app/api/) directory
+- Use descriptive endpoint names
+
+## File Organization
+
+```
+src/app/api/
+├── test/route.ts          # Health check endpoint
+└── v1/                    # Version 1 API
+    ├── slides/route.ts    # Slide generation
+    └── export/route.ts    # Export functionality
+```
+
+## Route Handler Pattern
+
+### Basic Structure
+
+```typescript
+// ✅ Standard API route structure
+import { NextRequest, NextResponse } from 'next/server';
+import type { ApiResponse } from '@/types/api';
+import {
+  validateRequest,
+  createSuccessResponse,
+  CommonErrorResponses,
+} from '@/lib/api';
+
+export async function POST(request: NextRequest) {
+  try {
+    // 1. Extract and validate request data
+    const data = await request.json();
+    const validation = validateRequest(data);
+
+    if (!validation.success) {
+      return createValidationErrorResponse(validation.errors);
+    }
+
+    // 2. Business logic
+    const result = await processRequest(validation.data);
+
+    // 3. Return success response
+    return createSuccessResponse(result);
+  } catch (error) {
+    // 4. Error handling
+    return CommonErrorResponses.internalError('Operation failed');
+  }
+}
+```
+
+### Error Handling
+
+- Always use try-catch blocks
+- Use standardized error responses from [src/lib/api/responses.ts](mdc:src/lib/api/responses.ts)
+- Include request ID for tracing
+- Log errors appropriately
+
+### Validation
+
+- Validate all input data using [src/lib/validation.ts](mdc:src/lib/validation.ts)
+- Return detailed validation errors
+- Sanitize user inputs
+
+### Response Format
+
+- Use consistent response format from [src/types/api.ts](mdc:src/types/api.ts)
+- Include success/error status
+- Provide meaningful error messages
+- Add request tracing headers
+
+### Middleware Usage
+
+- Apply common middleware from [src/lib/api/middleware.ts](mdc:src/lib/api/middleware.ts)
+- Include CORS headers
+- Rate limiting for external APIs
+- Request logging
+
+## Key API Routes
+
+### Slide Generation: [src/app/api/v1/slides/route.ts](mdc:src/app/api/v1/slides/route.ts)
+
+- Integrates with OpenAI API
+- Handles caching
+- Validates API keys
+- Returns generated markdown
+
+### Export: [src/app/api/v1/export/route.ts](mdc:src/app/api/v1/export/route.ts)
+
+- Converts markdown to various formats
+- Handles file downloads
+- Supports multiple themes
+- Configurable export options
+
+### Health Check: [src/app/api/test/route.ts](mdc:src/app/api/test/route.ts)
+
+- Simple endpoint for monitoring
+- Returns timestamp and status
+- No authentication required
+
+## Authentication
+
+- Extract API key from headers: `x-api-key` or `Authorization: Bearer`
+- Validate OpenAI API key format
+- Handle authentication errors gracefully
+
+## Performance
+
+- Implement caching where appropriate
+- Use streaming for large responses
+- Set proper cache headers
+- Monitor API response times
+  description:
+  globs:
+  alwaysApply: false
+
+---

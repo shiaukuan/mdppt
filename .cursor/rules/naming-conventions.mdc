@@ -1,0 +1,198 @@
+# Naming Conventions
+
+## File Naming
+
+### Components
+
+- Use PascalCase for component files: `MarkdownEditor.tsx`
+- Match component name to file name
+- Use descriptive, specific names
+- Group related components in folders
+
+### Utilities and Hooks
+
+- Use camelCase for utility files: `markdown-utils.ts`
+- Use kebab-case for multi-word files: `performance-utils.ts`
+- Custom hooks start with "use": `useDebounce.ts`
+
+### Types and Interfaces
+
+- Use descriptive names in `types/` directory
+- Group related types: `api.ts`, `slides.ts`
+- Use PascalCase for interface names
+
+## Variable Naming
+
+### Constants
+
+```typescript
+// ✅ SCREAMING_SNAKE_CASE for constants
+const MAX_SLIDE_COUNT = 100;
+const DEFAULT_THEME = 'default';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+```
+
+### Functions
+
+```typescript
+// ✅ camelCase with descriptive names
+const generateSlideId = () => {
+  /* */
+};
+const validateApiKey = (key: string) => {
+  /* */
+};
+const handleFormSubmit = () => {
+  /* */
+};
+```
+
+### Components and Interfaces
+
+```typescript
+// ✅ PascalCase for components and types
+interface SlideGenerationRequest {
+  /* */
+}
+interface MarkdownEditorProps {
+  /* */
+}
+const MarkdownEditor: React.FC<Props> = () => {
+  /* */
+};
+```
+
+## Event Handler Naming
+
+### Pattern: handle + Action + OptionalTarget
+
+```typescript
+// ✅ Good event handler names
+const handleClick = () => {
+  /* */
+};
+const handleFormSubmit = () => {
+  /* */
+};
+const handleSlideNavigation = () => {
+  /* */
+};
+const handleApiKeyChange = () => {
+  /* */
+};
+const handleEditorTextChange = () => {
+  /* */
+};
+```
+
+## State and Props Naming
+
+### Boolean Props
+
+```typescript
+// ✅ Use is/has/can/should prefixes
+interface Props {
+  isLoading: boolean;
+  hasError: boolean;
+  canEdit: boolean;
+  shouldAutoSave: boolean;
+  disabled: boolean; // exception: common HTML attributes
+}
+```
+
+### State Variables
+
+```typescript
+// ✅ Descriptive state names
+const [currentSlide, setCurrentSlide] = useState(0);
+const [isGenerating, setIsGenerating] = useState(false);
+const [editorContent, setEditorContent] = useState('');
+const [apiKeyValid, setApiKeyValid] = useState(false);
+```
+
+## API and Route Naming
+
+### Endpoint Naming
+
+- Use kebab-case for URLs: `/api/v1/slide-generation`
+- Use nouns for resources: `/slides`, `/export`
+- Use verbs for actions: `/generate`, `/validate`
+
+### Parameter Naming
+
+```typescript
+// ✅ Consistent parameter naming
+interface SlideRequest {
+  topic: string; // camelCase for JSON
+  maxPages: number; // not max_pages
+  targetAudience: string; // not target_audience
+  includeCode: boolean; // not include_code
+}
+```
+
+## CSS Class Naming
+
+### Tailwind Conventions
+
+- Use Tailwind utility classes when possible
+- Custom classes use kebab-case: `custom-editor-theme`
+- Component-specific classes: `markdown-editor__toolbar`
+
+### CSS Modules (if used)
+
+```css
+/* ✅ BEM-like naming */
+.markdown-editor {
+  /* base styles */
+}
+
+.markdown-editor__toolbar {
+  /* toolbar styles */
+}
+
+.markdown-editor--dark {
+  /* dark variant */
+}
+```
+
+## Directory and Module Naming
+
+### Consistency Rules
+
+- Folders: lowercase with hyphens for multi-word
+- Components: PascalCase folders and files
+- Utilities: camelCase files in kebab-case folders
+- Types: descriptive names grouped logically
+
+### Examples
+
+```
+src/
+├── components/Editor/     # PascalCase for component folders
+├── lib/api/              # lowercase for utility folders
+├── hooks/                # lowercase for hook collections
+├── stores/               # lowercase for state management
+└── types/                # lowercase for type collections
+```
+
+## Git and Documentation
+
+### Branch Naming
+
+- `feature/add-export-functionality`
+- `fix/api-validation-error`
+- `docs/update-readme`
+- `refactor/simplify-editor-state`
+
+### Commit Messages
+
+- Follow Conventional Commits format
+- `feat: add PDF export functionality`
+- `fix: resolve API key validation issue`
+- `docs: update API documentation`
+- `refactor: simplify component props`
+  description:
+  globs:
+  alwaysApply: false
+
+---

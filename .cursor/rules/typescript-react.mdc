@@ -1,0 +1,118 @@
+---
+title: TypeScript & React Standards
+---
+
+# TypeScript & React Standards
+
+## TypeScript Best Practices
+
+### Type Definitions
+
+- Always use explicit interface definitions for props and complex objects
+- Place shared types in [src/types/](mdc:src/types/) directory
+- Use `type` for unions, `interface` for object shapes
+- Prefer `unknown` over `any`, avoid `any` completely
+
+```typescript
+// ✅ Good
+interface ButtonProps {
+  children: ReactNode;
+  variant?: 'primary' | 'secondary';
+  disabled?: boolean;
+  onClick?: () => void;
+}
+
+// ❌ Avoid
+const ButtonProps = {
+  children: any,
+  variant: any,
+  onClick: any,
+};
+```
+
+### Imports
+
+- Use type-only imports: `import type { SomeType } from './types'`
+- Group imports: external libraries → internal modules → relative imports
+- Use absolute imports with `@/` prefix
+
+```typescript
+// ✅ Good import order
+import React from 'react';
+import { NextRequest } from 'next/server';
+
+import type { ApiResponse } from '@/types/api';
+import { validateRequest } from '@/lib/validation';
+
+import './component.css';
+```
+
+## React Component Standards
+
+### Component Structure
+
+- Use functional components with TypeScript
+- Props interface should match component name + "Props"
+- Export component as named export
+- Use `React.FC<Props>` or explicit return type
+
+```typescript
+// ✅ Good component structure
+interface MarkdownEditorProps {
+  className?: string;
+  onChange?: (value: string) => void;
+  placeholder?: string;
+}
+
+export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
+  className,
+  onChange,
+  placeholder = 'Enter markdown...',
+}) => {
+  // Component implementation
+  return <div>...</div>;
+};
+```
+
+### State Management
+
+- Use Zustand for global state: [src/stores/editorStore.ts](mdc:src/stores/editorStore.ts)
+- Use React Context for theme and settings: [src/contexts/SettingsContext.tsx](mdc:src/contexts/SettingsContext.tsx)
+- Use local state for component-specific data
+
+### Event Handlers
+
+- Prefix with "handle": `handleClick`, `handleSubmit`
+- Use arrow functions for inline handlers
+- Extract complex handlers to separate functions
+
+### Conditional Rendering
+
+- Use ternary operator for simple conditions
+- Use logical AND (`&&`) for conditional rendering
+- Extract complex conditions to variables
+
+```typescript
+// ✅ Good
+const showError = error && !isLoading;
+return (
+  <div>
+    {showError && <ErrorMessage error={error} />}
+    {isLoading ? <Spinner /> : <Content />}
+  </div>
+);
+```
+
+## Error Handling
+
+- Always wrap async operations in try-catch
+- Use the ErrorBoundary component: [src/components/ErrorBoundary.tsx](mdc:src/components/ErrorBoundary.tsx)
+- Provide meaningful error messages
+- Log errors in development mode
+
+## Performance
+
+- Use `useCallback` for event handlers passed to child components
+- Use `useMemo` for expensive calculations
+- Use `React.memo` for components that receive stable props
+- Implement proper cleanup in `useEffect`

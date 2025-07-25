@@ -1,0 +1,273 @@
+# Testing Standards
+
+## Test Organization
+
+### File Structure
+
+```
+src/
+├── __tests__/           # Global tests
+│   ├── utils.test.ts
+│   └── api/
+├── components/
+│   └── Button/
+│       ├── Button.tsx
+│       └── Button.test.tsx  # Co-located component tests
+└── lib/
+    └── validation/
+        ├── validation.ts
+        └── validation.test.ts
+```
+
+### Naming Conventions
+
+- Test files: `ComponentName.test.tsx` or `functionName.test.ts`
+- Test suites: `describe('ComponentName', () => {})`
+- Test cases: `test('should do something when condition', () => {})`
+
+## Testing Patterns
+
+### Component Testing
+
+```typescript
+// ✅ Component test example
+import { render, fireEvent, screen } from '@testing-library/react';
+import { Button } from './Button';
+
+describe('Button', () => {
+  test('renders button with correct text', () => {
+    render(<Button>Click me</Button>);
+    expect(screen.getByText('Click me')).toBeInTheDocument();
+  });
+
+  test('calls onClick when clicked', () => {
+    const handleClick = jest.fn();
+    render(<Button onClick={handleClick}>Click me</Button>);
+
+    fireEvent.click(screen.getByText('Click me'));
+    expect(handleClick).toHaveBeenCalledTimes(1);
+  });
+
+  test('applies disabled state correctly', () => {
+    render(<Button disabled>Click me</Button>);
+    expect(screen.getByRole('button')).toBeDisabled();
+  });
+});
+```
+
+### API Route Testing
+
+```typescript
+// ✅ API route test example
+import { NextRequest } from 'next/server';
+import { POST } from '../route';
+
+describe('/api/v1/slides', () => {
+  test('generates slides successfully', async () => {
+    const request = new NextRequest('http://localhost:3000/api/v1/slides', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': 'test-key',
+      },
+      body: JSON.stringify({ topic: 'Test Topic' }),
+    });
+
+    const response = await POST(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.success).toBe(true);
+    expect(data.data).toHaveProperty('markdown');
+  });
+
+  test('returns validation error for missing topic', async () => {
+    const request = new NextRequest('http://localhost:3000/api/v1/slides', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+
+    const response = await POST(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.success).toBe(false);
+    expect(data.error.code).toBe('VALIDATION_ERROR');
+  });
+});
+```
+
+### Utility Function Testing
+
+```typescript
+// ✅ Utility function test example
+import { formatFileSize, generateId } from '@/lib/utils';
+
+describe('Utils', () => {
+  describe('formatFileSize', () => {
+    test('formats bytes correctly', () => {
+      expect(formatFileSize(1024)).toBe('1.0 KB');
+      expect(formatFileSize(1048576)).toBe('1.0 MB');
+      expect(formatFileSize(0)).toBe('0 Bytes');
+    });
+  });
+
+  describe('generateId', () => {
+    test('creates unique IDs', () => {
+      const id1 = generateId();
+      const id2 = generateId();
+
+      expect(id1).not.toBe(id2);
+      expect(id1).toHaveLength(8);
+      expect(typeof id1).toBe('string');
+    });
+  });
+});
+```
+
+## Mocking Strategies
+
+### External APIs
+
+```typescript
+// ✅ Mock OpenAI API
+jest.mock('@/lib/openai', () => ({
+  createOpenAIClient: jest.fn(() => ({
+    generateSlides: jest.fn().mockResolvedValue({
+      markdown: '# Test Slide\n\nTest content',
+      metadata: { slideCount: 1 },
+    }),
+  })),
+}));
+```
+
+### React Context
+
+```typescript
+// ✅ Mock React Context
+const mockToast = {
+  showSuccess: jest.fn(),
+  showError: jest.fn(),
+  showLoading: jest.fn(),
+};
+
+jest.mock('@/contexts/ToastContext', () => ({
+  useToast: () => mockToast,
+}));
+```
+
+### Next.js Router
+
+```typescript
+// ✅ Mock Next.js router
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+    replace: jest.fn(),
+    back: jest.fn(),
+  }),
+}));
+```
+
+## Testing Guidelines
+
+### What to Test
+
+- **Components**: Props handling, event handlers, conditional rendering
+- **Hooks**: State changes, side effects, return values
+- **Utils**: Input/output behavior, edge cases, error handling
+- **API Routes**: Request validation, response format, error handling
+
+### What Not to Test
+
+- Third-party library internals
+- Implementation details
+- Trivial getters/setters
+- Static content
+
+### Test Structure (AAA Pattern)
+
+```typescript
+test('should do something when condition', () => {
+  // Arrange - Set up test data
+  const props = { variant: 'primary', onClick: jest.fn() };
+
+  // Act - Perform the action
+  render(<Button {...props}>Test</Button>);
+  fireEvent.click(screen.getByRole('button'));
+
+  // Assert - Verify the outcome
+  expect(props.onClick).toHaveBeenCalled();
+});
+```
+
+## Test Coverage Goals
+
+### Coverage Targets
+
+- **Components**: 80%+ coverage
+- **Utilities**: 90%+ coverage
+- **API Routes**: 85%+ coverage
+- **Critical paths**: 100% coverage
+
+### Coverage Commands
+
+```bash
+npm run test:coverage    # Generate coverage report
+npm run test:watch       # Watch mode for development
+npm run test:ci          # CI/CD pipeline tests
+```
+
+## Integration Testing
+
+### E2E Testing with Playwright
+
+```typescript
+// ✅ E2E test example
+import { test, expect } from '@playwright/test';
+
+test('slide generation flow', async ({ page }) => {
+  await page.goto('http://localhost:3000');
+
+  // Fill in the generation form
+  await page.click('[data-testid="generate-button"]');
+  await page.fill('[data-testid="topic-input"]', 'React Tutorial');
+  await page.click('[data-testid="submit-button"]');
+
+  // Wait for generation to complete
+  await page.waitForSelector('[data-testid="generated-content"]');
+
+  // Verify the content was generated
+  const content = await page.textContent('[data-testid="generated-content"]');
+  expect(content).toContain('React');
+});
+```
+
+## Best Practices
+
+### Test Maintenance
+
+- Keep tests simple and focused
+- Use descriptive test names
+- Avoid testing implementation details
+- Update tests when refactoring
+
+### Performance
+
+- Use `screen.getByRole()` over `container.querySelector()`
+- Prefer user-centric queries
+- Clean up after each test
+- Mock external dependencies
+
+### Debugging
+
+- Use `screen.debug()` to see rendered output
+- Add `data-testid` attributes for complex queries
+- Use `--verbose` flag for detailed output
+- Isolate failing tests with `.only()`
+  description:
+  globs:
+  alwaysApply: false
+
+---

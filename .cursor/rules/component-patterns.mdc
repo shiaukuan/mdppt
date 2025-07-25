@@ -1,0 +1,169 @@
+# Component Development Patterns
+
+## Component Organization
+
+### Directory Structure
+
+```
+src/components/
+├── Editor/              # Markdown editor components
+│   ├── MarkdownEditor.tsx
+│   └── EditorToolbar.tsx
+├── Preview/             # Slide preview components
+│   ├── SlidePreview.tsx
+│   ├── PreviewControls.tsx
+│   └── IntegratedPreview.tsx
+├── Layout/              # Layout components
+│   ├── Container.tsx
+│   ├── Header.tsx
+│   └── SplitView.tsx
+├── UI/                  # Reusable UI components
+│   ├── Button.tsx
+│   ├── Input.tsx
+│   └── LoadingSpinner.tsx
+└── SlideGenerator/      # AI generation components
+    ├── GeneratorForm.tsx
+    └── ApiKeyInput.tsx
+```
+
+## Component Architecture
+
+### Props Interface Pattern
+
+```typescript
+// ✅ Standard props pattern
+export interface ComponentNameProps {
+  // Required props first
+  children: ReactNode;
+
+  // Optional props with defaults
+  className?: string;
+  variant?: 'primary' | 'secondary';
+  disabled?: boolean;
+
+  // Event handlers
+  onClick?: () => void;
+  onChange?: (value: string) => void;
+
+  // Advanced props
+  options?: Partial<ComponentOptions>;
+}
+```
+
+### Component Export Pattern
+
+```typescript
+// ✅ Named export with forwardRef if needed
+export const ComponentName = React.forwardRef<HTMLElement, ComponentNameProps>(
+  ({ children, className, ...props }, ref) => {
+    return (
+      <element ref={ref} className={cn('base-styles', className)} {...props}>
+        {children}
+      </element>
+    );
+  }
+);
+
+ComponentName.displayName = 'ComponentName';
+```
+
+## Key Components
+
+### Editor Components
+
+- **MarkdownEditor**: Main editing interface with syntax highlighting
+- **EditorToolbar**: Formatting tools and statistics display
+- Use [src/stores/editorStore.ts](mdc:src/stores/editorStore.ts) for state
+
+### Preview Components
+
+- **IntegratedPreview**: Complete preview system with controls
+- **SlideViewer**: Core slide rendering component
+- **PreviewControls**: Navigation and zoom controls
+
+### Layout Components
+
+- **Container**: Standard content wrapper with responsive breakpoints
+- **SplitView**: Resizable split panel layout
+- **Header**: Application header with actions
+
+### UI Components
+
+- **Button**: Standardized button with variants
+- **Input**: Form input with validation states
+- **LoadingSpinner**: Consistent loading indicators
+
+## Styling Conventions
+
+### Tailwind Classes
+
+- Use `cn()` utility from [src/lib/utils.ts](mdc:src/lib/utils.ts) for conditional classes
+- Define base styles, then conditional variants
+- Prefer Tailwind classes over custom CSS
+
+```typescript
+// ✅ Good styling pattern
+className={cn(
+  'base-class another-base',
+  variant === 'primary' && 'variant-styles',
+  disabled && 'disabled-styles',
+  className // Allow override
+)}
+```
+
+### Responsive Design
+
+- Mobile-first approach
+- Use Tailwind responsive prefixes: `sm:`, `md:`, `lg:`
+- Test on multiple screen sizes
+
+## State Management
+
+### Local State
+
+- Use `useState` for component-specific state
+- Use `useReducer` for complex state logic
+- Extract custom hooks for reusable logic
+
+### Global State
+
+- Editor state: [src/stores/editorStore.ts](mdc:src/stores/editorStore.ts)
+- Settings: [src/contexts/SettingsContext.tsx](mdc:src/contexts/SettingsContext.tsx)
+- Toast notifications: [src/contexts/ToastContext.tsx](mdc:src/contexts/ToastContext.tsx)
+
+## Performance Optimization
+
+### Memoization
+
+```typescript
+// ✅ Memoize expensive components
+export const ExpensiveComponent = React.memo<Props>(({ data }) => {
+  const processedData = useMemo(() =>
+    expensiveCalculation(data),
+    [data]
+  );
+
+  return <div>{processedData}</div>;
+});
+```
+
+### Event Handlers
+
+```typescript
+// ✅ Memoize event handlers
+const handleClick = useCallback(() => {
+  // Handler logic
+}, [dependencies]);
+```
+
+## Error Boundaries
+
+- Wrap major sections with ErrorBoundary
+- Provide fallback UI
+- Log errors in development
+- Reference: [src/components/ErrorBoundary.tsx](mdc:src/components/ErrorBoundary.tsx)
+  description:
+  globs:
+  alwaysApply: false
+
+---

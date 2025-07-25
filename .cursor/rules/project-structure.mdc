@@ -1,0 +1,61 @@
+---
+title: Project Structure Guide
+---
+
+# Project Structure Guide
+
+This is a **Markdown Slide Generator** built with Next.js 15, React 18, and TypeScript. The project uses App Router and follows a modern React architecture.
+
+## Core Architecture
+
+- **Frontend**: Next.js 15 + React 18 + TypeScript
+- **Styling**: Tailwind CSS with responsive design
+- **State Management**: Zustand + React Context
+- **Slide Engine**: Marp Core for Markdown to slides conversion
+- **AI Service**: OpenAI API (GPT-4/3.5-turbo)
+
+## Directory Structure
+
+```
+src/
+├── app/                    # Next.js App Router
+│   ├── api/               # API routes
+│   │   ├── test/          # Test endpoints
+│   │   └── v1/            # Versioned API
+│   ├── layout.tsx         # Root layout
+│   ├── page.tsx           # Home page
+│   └── RootLayoutClient.tsx # Client-side layout
+├── components/            # React components
+│   ├── Editor/           # Markdown editor components
+│   ├── Preview/          # Slide preview components
+│   ├── Layout/           # Layout components
+│   ├── UI/               # Reusable UI components
+│   └── SlideGenerator/   # AI generation components
+├── contexts/             # React Context providers
+├── hooks/               # Custom React hooks
+├── lib/                 # Utilities and core logic
+│   ├── api/            # API utilities
+│   ├── cache/          # Caching system
+│   ├── editor/         # Editor utilities
+│   ├── marp/           # Marp integration
+│   └── openai/         # OpenAI integration
+├── stores/             # Zustand stores
+└── types/              # TypeScript type definitions
+```
+
+## Key Files
+
+- Main entry: [src/app/page.tsx](mdc:src/app/page.tsx)
+- Root layout: [src/app/layout.tsx](mdc:src/app/layout.tsx)
+- Editor store: [src/stores/editorStore.ts](mdc:src/stores/editorStore.ts)
+- API types: [src/types/api.ts](mdc:src/types/api.ts)
+- Main editor: [src/components/Editor/MarkdownEditor.tsx](mdc:src/components/Editor/MarkdownEditor.tsx)
+- Preview system: [src/components/Preview/IntegratedPreview.tsx](mdc:src/components/Preview/IntegratedPreview.tsx)
+
+## Import Conventions
+
+- Use `@/` prefix for absolute imports from `src/`
+- Group imports: external libraries, internal modules, relative imports
+- Use type-only imports when possible: `import type { ... }`
+
+---
