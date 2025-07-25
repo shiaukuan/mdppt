@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react';
 import { useSettings, useTheme } from '@/contexts/SettingsContext';
-import { useEditorStore } from '@/stores/editorStore';
 import { ToastProvider } from '@/contexts/ToastContext';
 import ErrorBoundary from '@/components/ErrorBoundary';
 
@@ -13,25 +12,22 @@ interface RootLayoutClientProps {
 export function RootLayoutClient({ children }: RootLayoutClientProps) {
   const { isLoading } = useSettings();
   const { theme } = useTheme();
-  const loadFromStorage = useEditorStore((state) => state.loadFromStorage);
-
-  // 載入編輯器狀態
-  useEffect(() => {
-    loadFromStorage();
-  }, [loadFromStorage]);
 
   // 應用主題
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
     const root = window.document.documentElement;
-    
+
     // 移除所有主題類別
     root.classList.remove('light', 'dark');
 
     if (theme === 'system') {
       // 使用系統主題
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)')
+        .matches
+        ? 'dark'
+        : 'light';
       root.classList.add(systemTheme);
     } else {
       // 使用指定主題
@@ -44,7 +40,7 @@ export function RootLayoutClient({ children }: RootLayoutClientProps) {
     if (typeof window === 'undefined' || theme !== 'system') return;
 
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    
+
     const handleChange = (e: MediaQueryListEvent) => {
       const root = window.document.documentElement;
       root.classList.remove('light', 'dark');
@@ -91,11 +87,9 @@ export function RootLayoutClient({ children }: RootLayoutClientProps) {
               </div>
             </div>
           </header>
-          
-          <main className="flex-1">
-            {children}
-          </main>
-          
+
+          <main className="flex-1">{children}</main>
+
           <footer className="border-t border-border bg-card mt-auto">
             <div className="container mx-auto px-4 py-4 text-center text-muted-foreground">
               <p>© 2025 Markdown Slide Generator - Powered by OpenAI</p>
@@ -110,9 +104,13 @@ export function RootLayoutClient({ children }: RootLayoutClientProps) {
 // 主題切換按鈕
 function ThemeToggle() {
   const { theme, setTheme } = useTheme();
-  
+
   const toggleTheme = () => {
-    const themes: Array<'light' | 'dark' | 'system'> = ['light', 'dark', 'system'];
+    const themes: Array<'light' | 'dark' | 'system'> = [
+      'light',
+      'dark',
+      'system',
+    ];
     const currentIndex = themes.indexOf(theme);
     const nextIndex = (currentIndex + 1) % themes.length;
     const nextTheme = themes[nextIndex];
@@ -162,7 +160,7 @@ function ThemeToggle() {
 // 設定按鈕
 function SettingsButton() {
   const { isApiKeyValid } = useSettings();
-  
+
   return (
     <button
       className="flex items-center space-x-2 px-3 py-2 rounded-md bg-secondary hover:bg-secondary/80 transition-colors"
@@ -171,7 +169,10 @@ function SettingsButton() {
       <span className="text-lg">⚙️</span>
       <span className="text-sm hidden sm:inline">設定</span>
       {!isApiKeyValid() && (
-        <span className="inline-flex h-2 w-2 rounded-full bg-red-500 animate-pulse" title="需要設定 API Key" />
+        <span
+          className="inline-flex h-2 w-2 rounded-full bg-red-500 animate-pulse"
+          title="需要設定 API Key"
+        />
       )}
     </button>
   );

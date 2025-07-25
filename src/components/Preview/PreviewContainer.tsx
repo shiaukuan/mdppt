@@ -6,7 +6,10 @@
 'use client';
 
 import React, { Component, ReactNode, Suspense } from 'react';
-import { useMarpPreview, type UseMarpPreviewOptions } from '@/hooks/useMarpPreview';
+import {
+  useMarpPreview,
+  type UseMarpPreviewOptions,
+} from '@/hooks/useMarpPreview';
 import type { SupportedTheme } from '@/lib/marp/config';
 
 // 錯誤邊界狀態
@@ -26,7 +29,10 @@ interface ErrorBoundaryProps {
 /**
  * 錯誤邊界組件
  */
-class PreviewErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+class PreviewErrorBoundary extends Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
+> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = {
@@ -111,7 +117,10 @@ interface LoadingSpinnerProps {
   size?: 'small' | 'medium' | 'large';
 }
 
-function LoadingSpinner({ message = '載入中...', size = 'medium' }: LoadingSpinnerProps) {
+function LoadingSpinner({
+  message = '載入中...',
+  size = 'medium',
+}: LoadingSpinnerProps) {
   const sizeClasses = {
     small: 'w-4 h-4',
     medium: 'w-8 h-8',
@@ -120,7 +129,9 @@ function LoadingSpinner({ message = '載入中...', size = 'medium' }: LoadingSp
 
   return (
     <div className="flex flex-col items-center justify-center p-8 bg-blue-50 border border-blue-200 rounded-lg">
-      <div className={`animate-spin rounded-full border-4 border-blue-200 border-t-blue-600 ${sizeClasses[size]} mb-4`} />
+      <div
+        className={`animate-spin rounded-full border-4 border-blue-200 border-t-blue-600 ${sizeClasses[size]} mb-4`}
+      />
       <div className="text-blue-700 text-sm font-medium">{message}</div>
     </div>
   );
@@ -151,7 +162,7 @@ function PreviewContent({
     initialMarkdown: markdown,
     initialConfig: { theme },
     autoInitialize: true,
-    onError,
+    ...(onError && { onError }),
     ...options,
   });
 
@@ -219,7 +230,8 @@ function PreviewContent({
           📝 開始撰寫投影片
         </div>
         <div className="text-gray-600 text-sm text-center max-w-md">
-          請在左側編輯器中輸入 Markdown 內容，<br />
+          請在左側編輯器中輸入 Markdown 內容，
+          <br />
           使用 <code className="bg-gray-200 px-1 rounded">---</code> 分隔投影片
         </div>
       </div>
@@ -233,7 +245,7 @@ function PreviewContent({
     <div className={`marp-preview-container ${className}`}>
       {/* 投影片樣式 */}
       <style dangerouslySetInnerHTML={{ __html: marpPreview.result.css }} />
-      
+
       {/* 投影片內容 */}
       <div className="marp-slide-container relative overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
         {currentSlide && (
@@ -242,7 +254,7 @@ function PreviewContent({
             dangerouslySetInnerHTML={{ __html: currentSlide.html }}
           />
         )}
-        
+
         {/* 投影片導航 */}
         {marpPreview.result.totalSlides > 1 && (
           <div className="absolute bottom-4 right-4 flex items-center gap-2 bg-black/80 text-white px-3 py-1 rounded-full text-sm">
@@ -254,14 +266,18 @@ function PreviewContent({
             >
               ←
             </button>
-            
+
             <span className="px-2">
-              {marpPreview.currentSlideIndex + 1} / {marpPreview.result.totalSlides}
+              {marpPreview.currentSlideIndex + 1} /{' '}
+              {marpPreview.result.totalSlides}
             </span>
-            
+
             <button
               onClick={marpPreview.nextSlide}
-              disabled={marpPreview.currentSlideIndex >= marpPreview.result.totalSlides - 1}
+              disabled={
+                marpPreview.currentSlideIndex >=
+                marpPreview.result.totalSlides - 1
+              }
               className="hover:bg-white/20 p-1 rounded disabled:opacity-50 disabled:cursor-not-allowed"
               title="下一張投影片"
             >
@@ -270,19 +286,19 @@ function PreviewContent({
           </div>
         )}
       </div>
-      
+
       {/* 投影片進度條 */}
       {marpPreview.result.totalSlides > 1 && (
         <div className="mt-4 bg-gray-200 rounded-full h-2 overflow-hidden">
           <div
             className="bg-blue-600 h-full transition-all duration-300 ease-out"
             style={{
-              width: `${((marpPreview.currentSlideIndex + 1) / marpPreview.result.totalSlides) * 100}%`
+              width: `${((marpPreview.currentSlideIndex + 1) / marpPreview.result.totalSlides) * 100}%`,
             }}
           />
         </div>
       )}
-      
+
       {/* 投影片縮圖（開發用） */}
       {process.env.NODE_ENV === 'development' && (
         <details className="mt-4">
@@ -295,13 +311,13 @@ function PreviewContent({
                 key={index}
                 onClick={() => marpPreview.goToSlide(index)}
                 className={`relative border rounded overflow-hidden hover:border-blue-500 transition-colors ${
-                  index === marpPreview.currentSlideIndex 
-                    ? 'border-blue-500 ring-2 ring-blue-200' 
+                  index === marpPreview.currentSlideIndex
+                    ? 'border-blue-500 ring-2 ring-blue-200'
                     : 'border-gray-200'
                 }`}
                 title={`投影片 ${index + 1}: ${slide.title || '無標題'}`}
               >
-                <div 
+                <div
                   className="w-full h-16 text-xs transform scale-50 origin-top-left"
                   dangerouslySetInnerHTML={{ __html: slide.html }}
                 />
@@ -332,7 +348,7 @@ export interface PreviewContainerProps {
 
 /**
  * Marp 預覽容器組件
- * 
+ *
  * 提供完整的投影片預覽功能，包含：
  * - 錯誤邊界處理
  * - 載入狀態顯示
@@ -352,14 +368,18 @@ export function PreviewContainer({
   errorComponent,
 }: PreviewContainerProps) {
   const previewContent = (
-    <Suspense fallback={loadingComponent || <LoadingSpinner message="載入預覽組件..." />}>
+    <Suspense
+      fallback={
+        loadingComponent || <LoadingSpinner message="載入預覽組件..." />
+      }
+    >
       <PreviewContent
         markdown={markdown}
         theme={theme}
         options={options}
         className={className}
-        onSlideChange={onSlideChange}
-        onError={onError}
+        {...(onSlideChange && { onSlideChange })}
+        {...(onError && { onError })}
       />
     </Suspense>
   );
@@ -369,7 +389,7 @@ export function PreviewContainer({
   }
 
   return (
-    <PreviewErrorBoundary 
+    <PreviewErrorBoundary
       fallback={errorComponent}
       onError={(error, errorInfo) => {
         console.error('Preview Error:', error, errorInfo);
@@ -384,11 +404,11 @@ export function PreviewContainer({
 }
 
 // 簡化版預覽容器（僅接受必要 props）
-export function SimplePreviewContainer({ 
-  markdown, 
-  theme = 'default' 
-}: { 
-  markdown: string; 
+export function SimplePreviewContainer({
+  markdown,
+  theme = 'default',
+}: {
+  markdown: string;
   theme?: SupportedTheme;
 }) {
   return (

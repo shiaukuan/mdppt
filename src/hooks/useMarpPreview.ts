@@ -1,5 +1,5 @@
 /**
- * Marp 預覽 Hook
+ * Marp 預覽 Hook - 簡化版本
  * 提供 Markdown → HTML 轉換、防抖優化、錯誤處理和主題動態切換
  */
 
@@ -49,7 +49,9 @@ export interface UseMarpPreviewActions {
 }
 
 // Hook 返回值
-export interface UseMarpPreviewReturn extends UseMarpPreviewState, UseMarpPreviewActions {}
+export interface UseMarpPreviewReturn
+  extends UseMarpPreviewState,
+    UseMarpPreviewActions {}
 
 // Hook 選項
 export interface UseMarpPreviewOptions {
@@ -68,13 +70,15 @@ export interface UseMarpPreviewOptions {
 }
 
 /**
- * Marp 預覽 Hook
+ * Marp 預覽 Hook - 簡化版本
  */
-export function useMarpPreview(options: UseMarpPreviewOptions = {}): UseMarpPreviewReturn {
+export function useMarpPreview(
+  options: UseMarpPreviewOptions = {}
+): UseMarpPreviewReturn {
   const {
     initialMarkdown = '',
     initialConfig = {},
-    debounceDelay = PERFORMANCE_CONFIG.DEBOUNCE_DELAY,
+    debounceDelay = 300,
     autoInitialize = true,
     onError,
     onRenderComplete,
@@ -83,27 +87,29 @@ export function useMarpPreview(options: UseMarpPreviewOptions = {}): UseMarpPrev
   // 合併配置
   const fullConfig: MarpConfig = { ...DEFAULT_MARP_CONFIG, ...initialConfig };
 
-  // 狀態管理
-  const [state, setState] = useState<UseMarpPreviewState>({
-    result: {
-      html: '',
-      css: '',
-      slides: [],
-      totalSlides: 0,
-    },
-    isLoading: false,
-    error: null,
-    currentSlideIndex: 0,
-    config: fullConfig,
-    isInitialized: false,
+  console.log('🎯 useMarpPreview: Hook 初始化', {
+    initialMarkdown: initialMarkdown.substring(0, 50) + '...',
+    autoInitialize,
+    fullConfig,
   });
 
+  // 簡單的狀態管理
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<SlideRenderResult>({
+    html: '',
+    css: '',
+    slides: [],
+    totalSlides: 0,
+  });
+  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+  const [config, setConfig] = useState<MarpConfig>(fullConfig);
+
   // Refs
-  const markdownRef = useRef<string>(initialMarkdown);
+  const markdownRef = useRef(initialMarkdown || '');
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const renderCountRef = useRef<number>(0);
   const marpClientRef = useRef(getMarpClient());
-  const isUnmountedRef = useRef<boolean>(false);
 
   // 清理防抖計時器
   const clearDebounceTimer = useCallback(() => {
@@ -113,211 +119,212 @@ export function useMarpPreview(options: UseMarpPreviewOptions = {}): UseMarpPrev
     }
   }, []);
 
-  // 渲染投影片
-  const renderSlides = useCallback(async (markdown: string, config: MarpConfig) => {
-    if (isUnmountedRef.current) return;
+  // 渲染函數
+  const renderSlides = useCallback(
+    async (markdown: string, renderConfig: MarpConfig) => {
+      console.log('🎬 開始渲染投影片', { markdownLength: markdown.length });
 
-    const currentRenderCount = ++renderCountRef.current;
+      setIsLoading(true);
+      setError(null);
 
-    try {
-      setState(prev => ({ ...prev, isLoading: true, error: null }));
+      try {
+        const client = marpClientRef.current;
+        const renderResult = await client.render(markdown, renderConfig);
 
-      const client = marpClientRef.current;
-      const result = await client.render(markdown, config);
+        console.log('✅ 渲染完成', {
+          totalSlides: renderResult.totalSlides,
+          hasError: !!renderResult.error,
+        });
 
-      // 檢查是否是最新的渲染請求
-      if (currentRenderCount !== renderCountRef.current || isUnmountedRef.current) {
-        return;
+        setResult(renderResult);
+        setIsLoading(false);
+
+        if (renderResult.error) {
+          setError(renderResult.error);
+          onError?.(renderResult.error);
+        } else {
+          onRenderComplete?.(renderResult);
+        }
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : '渲染失敗';
+        console.error('❌ 渲染錯誤:', errorMessage);
+
+        setError(errorMessage);
+        setIsLoading(false);
+        onError?.(errorMessage);
       }
-
-      setState(prev => ({
-        ...prev,
-        result,
-        isLoading: false,
-        error: result.error || null,
-      }));
-
-      // 呼叫回調
-      if (result.error && onError) {
-        onError(result.error);
-      } else if (!result.error && onRenderComplete) {
-        onRenderComplete(result);
-      }
-
-    } catch (error) {
-      if (currentRenderCount !== renderCountRef.current || isUnmountedRef.current) {
-        return;
-      }
-
-      const errorMessage = error instanceof Error ? error.message : '渲染失敗';
-      
-      setState(prev => ({
-        ...prev,
-        isLoading: false,
-        error: errorMessage,
-      }));
-
-      if (onError) {
-        onError(errorMessage);
-      }
-    }
-  }, [onError, onRenderComplete]);
+    },
+    [onError, onRenderComplete]
+  );
 
   // 防抖渲染
-  const debouncedRender = useCallback((markdown: string, config: MarpConfig) => {
-    clearDebounceTimer();
-    
-    debounceTimerRef.current = setTimeout(() => {
-      renderSlides(markdown, config);
-    }, debounceDelay);
-  }, [clearDebounceTimer, renderSlides, debounceDelay]);
+  const debouncedRender = useCallback(
+    (markdown: string, renderConfig: MarpConfig) => {
+      clearDebounceTimer();
+      debounceTimerRef.current = setTimeout(() => {
+        renderSlides(markdown, renderConfig);
+      }, debounceDelay);
+    },
+    [clearDebounceTimer, renderSlides, debounceDelay]
+  );
 
   // 初始化 Marp
-  const initializeMarp = useCallback(async () => {
-    if (state.isInitialized || isUnmountedRef.current) return;
-
-    try {
-      setState(prev => ({ ...prev, isLoading: true }));
-      
-      const client = marpClientRef.current;
-      await client.waitForInitialization();
-      
-      if (isUnmountedRef.current) return;
-
-      setState(prev => ({ 
-        ...prev, 
-        isInitialized: true,
-        isLoading: false,
-      }));
-
-      // 如果有初始內容，開始渲染
-      if (markdownRef.current) {
-        debouncedRender(markdownRef.current, state.config);
-      }
-
-    } catch (error) {
-      if (isUnmountedRef.current) return;
-
-      const errorMessage = error instanceof Error ? error.message : 'Marp 初始化失敗';
-      
-      setState(prev => ({
-        ...prev,
-        isLoading: false,
-        error: errorMessage,
-        isInitialized: false,
-      }));
-
-      if (onError) {
-        onError(errorMessage);
-      }
-    }
-  }, [state.isInitialized, state.config, debouncedRender, onError]);
-
-  // 自動初始化
   useEffect(() => {
-    if (autoInitialize) {
-      initializeMarp();
+    if (!autoInitialize) {
+      console.log('❌ autoInitialize 為 false，跳過初始化');
+      return;
     }
-  }, [autoInitialize, initializeMarp]);
+
+    let mounted = true;
+
+    const initialize = async () => {
+      console.log('🚀 開始初始化 Marp Core...');
+
+      try {
+        setIsLoading(true);
+        const client = marpClientRef.current;
+        await client.waitForInitialization();
+
+        if (!mounted) return;
+
+        console.log('✅ Marp Core 初始化完成');
+        setIsInitialized(true);
+        setIsLoading(false);
+
+        // 如果有初始內容，立即渲染
+        if (markdownRef.current.trim()) {
+          console.log('📝 渲染初始內容');
+          renderSlides(markdownRef.current, config);
+        } else {
+          setIsLoading(false);
+        }
+      } catch (err) {
+        if (!mounted) return;
+
+        const errorMessage =
+          err instanceof Error ? err.message : 'Marp 初始化失敗';
+        console.error('❌ 初始化失敗:', errorMessage);
+
+        setError(errorMessage);
+        setIsLoading(false);
+        onError?.(errorMessage);
+      }
+    };
+
+    initialize();
+
+    return () => {
+      mounted = false;
+    };
+  }, [autoInitialize]); // 只依賴 autoInitialize
 
   // 清理函數
   useEffect(() => {
     return () => {
-      isUnmountedRef.current = true;
       clearDebounceTimer();
     };
   }, [clearDebounceTimer]);
 
-  // 更新 Markdown 內容
-  const updateMarkdown = useCallback((markdown: string) => {
-    markdownRef.current = markdown;
-    
-    if (state.isInitialized) {
-      debouncedRender(markdown, state.config);
-    }
-  }, [state.isInitialized, state.config, debouncedRender]);
+  // Hook 動作
+  const updateMarkdown = useCallback(
+    (markdown: string) => {
+      // 只有當 markdown 內容真的改變時才觸發渲染
+      if (markdown === markdownRef.current) {
+        return;
+      }
 
-  // 切換主題
-  const changeTheme = useCallback((theme: SupportedTheme) => {
-    const newConfig = { ...state.config, theme };
-    
-    setState(prev => ({ ...prev, config: newConfig }));
-    
-    if (state.isInitialized && markdownRef.current) {
-      debouncedRender(markdownRef.current, newConfig);
-    }
-  }, [state.config, state.isInitialized, debouncedRender]);
+      console.log('📝 updateMarkdown 被調用', {
+        markdownLength: markdown.length,
+        isInitialized,
+      });
 
-  // 更新配置
-  const updateConfig = useCallback((configUpdate: Partial<MarpConfig>) => {
-    const newConfig = { ...state.config, ...configUpdate };
-    
-    setState(prev => ({ ...prev, config: newConfig }));
-    
-    if (state.isInitialized && markdownRef.current) {
-      debouncedRender(markdownRef.current, newConfig);
-    }
-  }, [state.config, state.isInitialized, debouncedRender]);
+      markdownRef.current = markdown;
 
-  // 跳到指定投影片
-  const goToSlide = useCallback((index: number) => {
-    const maxIndex = Math.max(0, state.result.totalSlides - 1);
-    const validIndex = Math.max(0, Math.min(index, maxIndex));
-    
-    setState(prev => ({ ...prev, currentSlideIndex: validIndex }));
-  }, [state.result.totalSlides]);
+      if (isInitialized) {
+        debouncedRender(markdown, config);
+      } else {
+        console.log('⏳ Marp 尚未初始化，跳過渲染');
+      }
+    },
+    [isInitialized, config, debouncedRender]
+  );
 
-  // 下一張投影片
+  const changeTheme = useCallback(
+    (theme: SupportedTheme) => {
+      const newConfig = { ...config, theme };
+      setConfig(newConfig);
+
+      if (isInitialized && markdownRef.current) {
+        debouncedRender(markdownRef.current, newConfig);
+      }
+    },
+    [config, isInitialized, debouncedRender]
+  );
+
+  const updateConfig = useCallback(
+    (configUpdate: Partial<MarpConfig>) => {
+      const newConfig = { ...config, ...configUpdate };
+      setConfig(newConfig);
+
+      if (isInitialized && markdownRef.current) {
+        debouncedRender(markdownRef.current, newConfig);
+      }
+    },
+    [config, isInitialized, debouncedRender]
+  );
+
+  const goToSlide = useCallback(
+    (index: number) => {
+      const maxIndex = Math.max(0, result.totalSlides - 1);
+      const validIndex = Math.max(0, Math.min(index, maxIndex));
+      setCurrentSlideIndex(validIndex);
+    },
+    [result.totalSlides]
+  );
+
   const nextSlide = useCallback(() => {
-    goToSlide(state.currentSlideIndex + 1);
-  }, [state.currentSlideIndex, goToSlide]);
+    goToSlide(currentSlideIndex + 1);
+  }, [currentSlideIndex, goToSlide]);
 
-  // 上一張投影片
   const previousSlide = useCallback(() => {
-    goToSlide(state.currentSlideIndex - 1);
-  }, [state.currentSlideIndex, goToSlide]);
+    goToSlide(currentSlideIndex - 1);
+  }, [currentSlideIndex, goToSlide]);
 
-  // 重新渲染
   const refresh = useCallback(() => {
-    if (state.isInitialized && markdownRef.current) {
+    if (isInitialized && markdownRef.current) {
       clearDebounceTimer();
-      renderSlides(markdownRef.current, state.config);
+      renderSlides(markdownRef.current, config);
     }
-  }, [state.isInitialized, state.config, clearDebounceTimer, renderSlides]);
+  }, [isInitialized, config, clearDebounceTimer, renderSlides]);
 
-  // 清除錯誤
   const clearError = useCallback(() => {
-    setState(prev => ({ ...prev, error: null }));
+    setError(null);
   }, []);
 
-  // 重置狀態
   const reset = useCallback(() => {
     clearDebounceTimer();
-    markdownRef.current = '';
-    renderCountRef.current = 0;
-    
-    setState({
-      result: {
-        html: '',
-        css: '',
-        slides: [],
-        totalSlides: 0,
-      },
-      isLoading: false,
-      error: null,
-      currentSlideIndex: 0,
-      config: { ...DEFAULT_MARP_CONFIG, ...initialConfig },
-      isInitialized: false,
+    setIsInitialized(false);
+    setIsLoading(false);
+    setError(null);
+    setResult({
+      html: '',
+      css: '',
+      slides: [],
+      totalSlides: 0,
     });
-
-    if (autoInitialize) {
-      initializeMarp();
-    }
-  }, [clearDebounceTimer, initialConfig, autoInitialize, initializeMarp]);
+    setCurrentSlideIndex(0);
+    setConfig({ ...DEFAULT_MARP_CONFIG, ...initialConfig });
+    markdownRef.current = '';
+  }, [clearDebounceTimer, initialConfig]);
 
   return {
     // 狀態
-    ...state,
+    result,
+    isLoading,
+    error,
+    currentSlideIndex,
+    config,
+    isInitialized,
     // 動作
     updateMarkdown,
     changeTheme,
@@ -332,7 +339,10 @@ export function useMarpPreview(options: UseMarpPreviewOptions = {}): UseMarpPrev
 }
 
 // 預設 Hook（簡化版本）
-export function useSimpleMarpPreview(markdown: string, theme: SupportedTheme = 'default') {
+export function useSimpleMarpPreview(
+  markdown: string,
+  theme: SupportedTheme = 'default'
+) {
   return useMarpPreview({
     initialMarkdown: markdown,
     initialConfig: { theme },
@@ -344,21 +354,23 @@ export function useSimpleMarpPreview(markdown: string, theme: SupportedTheme = '
 export const useMarpPreviewUtils = {
   // 檢查是否有投影片
   hasSlides: (state: UseMarpPreviewState) => state.result.totalSlides > 0,
-  
+
   // 檢查是否在第一張投影片
   isFirstSlide: (state: UseMarpPreviewState) => state.currentSlideIndex === 0,
-  
+
   // 檢查是否在最後一張投影片
-  isLastSlide: (state: UseMarpPreviewState) => 
+  isLastSlide: (state: UseMarpPreviewState) =>
     state.currentSlideIndex >= state.result.totalSlides - 1,
-  
+
   // 獲取當前投影片
-  getCurrentSlide: (state: UseMarpPreviewState) => 
+  getCurrentSlide: (state: UseMarpPreviewState) =>
     state.result.slides[state.currentSlideIndex] || null,
-  
+
   // 獲取進度百分比
-  getProgress: (state: UseMarpPreviewState) => 
-    state.result.totalSlides > 0 
-      ? Math.round(((state.currentSlideIndex + 1) / state.result.totalSlides) * 100)
+  getProgress: (state: UseMarpPreviewState) =>
+    state.result.totalSlides > 0
+      ? Math.round(
+          ((state.currentSlideIndex + 1) / state.result.totalSlides) * 100
+        )
       : 0,
 };

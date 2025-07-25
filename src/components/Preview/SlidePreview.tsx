@@ -5,7 +5,7 @@
 
 'use client';
 
-import React, { useEffect, useCallback, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { useMarpPreview, useMarpPreviewUtils } from '@/hooks/useMarpPreview';
 import type { SupportedTheme, PreviewMode } from '@/lib/marp/config';
 import type { SlideData } from '@/lib/marp/client';
@@ -95,8 +95,10 @@ function EmptyState() {
       <div className="text-gray-400 text-4xl mb-4">📝</div>
       <div className="text-gray-600 font-semibold mb-2">開始撰寫投影片</div>
       <div className="text-gray-500 text-sm text-center max-w-md">
-        在左側編輯器中輸入 Markdown 內容<br />
-        使用 <code className="bg-gray-200 px-1 rounded text-xs">---</code> 分隔投影片
+        在左側編輯器中輸入 Markdown 內容
+        <br />
+        使用 <code className="bg-gray-200 px-1 rounded text-xs">---</code>{' '}
+        分隔投影片
       </div>
     </div>
   );
@@ -131,8 +133,18 @@ function SlideNavigation({
         className="p-2 rounded-lg bg-white/90 hover:bg-white shadow-sm border border-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
         title="上一張投影片 (←)"
       >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        <svg
+          className="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M15 19l-7-7 7-7"
+          />
         </svg>
       </button>
 
@@ -177,8 +189,18 @@ function SlideNavigation({
         className="p-2 rounded-lg bg-white/90 hover:bg-white shadow-sm border border-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
         title="下一張投影片 (→)"
       >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+        <svg
+          className="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M9 5l7 7-7 7"
+          />
         </svg>
       </button>
     </div>
@@ -192,11 +214,17 @@ interface ProgressIndicatorProps {
   className?: string;
 }
 
-function ProgressIndicator({ current, total, className = '' }: ProgressIndicatorProps) {
+function ProgressIndicator({
+  current,
+  total,
+  className = '',
+}: ProgressIndicatorProps) {
   const progress = total > 0 ? ((current + 1) / total) * 100 : 0;
 
   return (
-    <div className={`w-full bg-gray-200 rounded-full h-1 overflow-hidden ${className}`}>
+    <div
+      className={`w-full bg-gray-200 rounded-full h-1 overflow-hidden ${className}`}
+    >
       <div
         className="bg-blue-600 h-full transition-all duration-300 ease-out rounded-full"
         style={{ width: `${progress}%` }}
@@ -225,11 +253,10 @@ export function SlidePreview({
     showProgress = true,
     showSlideNumber = true,
     enableKeyboardNav = true,
-    mode = 'single',
+    mode: _mode = 'single',
   } = options;
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isInitialized, setIsInitialized] = useState(false);
 
   // 使用 Marp 預覽 Hook
   const marpPreview = useMarpPreview({
@@ -237,12 +264,9 @@ export function SlidePreview({
     initialConfig: { theme },
     debounceDelay,
     autoInitialize: true,
-    onError,
-    onRenderComplete: (result) => {
-      if (!isInitialized) {
-        setIsInitialized(true);
-        onReady?.(result.totalSlides);
-      }
+    ...(onError && { onError }),
+    onRenderComplete: result => {
+      onReady?.(result.totalSlides);
     },
   });
 
@@ -308,7 +332,20 @@ export function SlidePreview({
   }, [marpPreview]);
 
   // 渲染狀態處理
+  console.log('🎭 SlidePreview: 渲染狀態檢查', {
+    timestamp: new Date().toLocaleTimeString(),
+    isInitialized: marpPreview.isInitialized,
+    isLoading: marpPreview.isLoading,
+    totalSlides: marpPreview.result.totalSlides,
+    showLoadingState: !marpPreview.isInitialized || marpPreview.isLoading,
+    markdownLength: markdown.length,
+  });
+
   if (!marpPreview.isInitialized || marpPreview.isLoading) {
+    console.log('❌ SlidePreview: 顯示載入狀態，原因:', {
+      notInitialized: !marpPreview.isInitialized,
+      stillLoading: marpPreview.isLoading,
+    });
     return <LoadingState />;
   }
 
@@ -339,7 +376,9 @@ export function SlidePreview({
       <div className="flex-1 relative overflow-hidden">
         {/* 投影片內容 */}
         {currentSlide && (
-          <div className={`h-full flex items-center justify-center p-4 ${autoFit ? '' : 'overflow-auto'}`}>
+          <div
+            className={`h-full flex items-center justify-center p-4 ${autoFit ? '' : 'overflow-auto'}`}
+          >
             <div
               className={`marp-slide-content border border-gray-200 rounded-lg shadow-sm bg-white overflow-hidden ${
                 autoFit ? 'max-w-full max-h-full' : 'w-full h-full'
@@ -357,7 +396,8 @@ export function SlidePreview({
         {/* 投影片編號 */}
         {showSlideNumber && (
           <div className="absolute top-4 right-4 bg-black/75 text-white px-2 py-1 rounded text-sm font-medium">
-            {marpPreview.currentSlideIndex + 1} / {marpPreview.result.totalSlides}
+            {marpPreview.currentSlideIndex + 1} /{' '}
+            {marpPreview.result.totalSlides}
           </div>
         )}
 
@@ -402,10 +442,10 @@ export interface SimpleSlidePreviewProps {
   className?: string;
 }
 
-export function SimpleSlidePreview({ 
-  markdown, 
+export function SimpleSlidePreview({
+  markdown,
   theme = 'default',
-  className = '' 
+  className = '',
 }: SimpleSlidePreviewProps) {
   return (
     <SlidePreview

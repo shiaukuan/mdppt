@@ -5,7 +5,7 @@
 
 'use client';
 
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import type { SupportedTheme, PreviewMode } from '@/lib/marp/config';
 
 // 預覽控制組件 Props
@@ -13,38 +13,38 @@ export interface PreviewControlsProps {
   // 投影片資訊
   currentSlide: number;
   totalSlides: number;
-  
+
   // 當前設定
   theme: SupportedTheme;
   mode: PreviewMode;
-  
+
   // 縮放和全螢幕
   zoom: number;
   isFullscreen: boolean;
-  
+
   // 狀態
   isLoading?: boolean;
   canNavigate?: boolean;
-  
+
   // 導航事件
   onPrevious?: () => void;
   onNext?: () => void;
   onGoToSlide?: (index: number) => void;
-  
+
   // 控制事件
   onZoomIn?: () => void;
   onZoomOut?: () => void;
   onZoomReset?: () => void;
   onFullscreenToggle?: () => void;
-  
+
   // 模式和主題變更
   onModeChange?: (mode: PreviewMode) => void;
   onThemeChange?: (theme: SupportedTheme) => void;
-  
+
   // 其他動作
   onRefresh?: () => void;
   onExport?: () => void;
-  
+
   // 樣式
   className?: string;
   size?: 'small' | 'medium' | 'large';
@@ -88,19 +88,39 @@ function NavigationButtons({
         className={`${sizeClasses[size]} rounded-lg bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm`}
         title="上一張投影片 (←)"
       >
-        <svg className={iconSizes[size]} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        <svg
+          className={iconSizes[size]}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M15 19l-7-7 7-7"
+          />
         </svg>
       </button>
-      
+
       <button
         onClick={onNext}
         disabled={!canNavigate || currentSlide >= totalSlides - 1}
         className={`${sizeClasses[size]} rounded-lg bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm`}
         title="下一張投影片 (→)"
       >
-        <svg className={iconSizes[size]} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+        <svg
+          className={iconSizes[size]}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M9 5l7 7-7 7"
+          />
         </svg>
       </button>
     </div>
@@ -115,7 +135,12 @@ interface SlideCounterProps {
   size: 'small' | 'medium' | 'large';
 }
 
-function SlideCounter({ currentSlide, totalSlides, onGoToSlide, size }: SlideCounterProps) {
+function SlideCounter({
+  currentSlide,
+  totalSlides,
+  onGoToSlide,
+  size,
+}: SlideCounterProps) {
   const [showSlideSelector, setShowSlideSelector] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -128,15 +153,21 @@ function SlideCounter({ currentSlide, totalSlides, onGoToSlide, size }: SlideCou
   // 點擊外部關閉下拉選單
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setShowSlideSelector(false);
       }
     };
 
     if (showSlideSelector) {
       document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
+      return () =>
+        document.removeEventListener('mousedown', handleClickOutside);
     }
+
+    return undefined;
   }, [showSlideSelector]);
 
   return (
@@ -186,7 +217,13 @@ interface ZoomControlsProps {
   size: 'small' | 'medium' | 'large';
 }
 
-function ZoomControls({ zoom, onZoomIn, onZoomOut, onZoomReset, size }: ZoomControlsProps) {
+function ZoomControls({
+  zoom,
+  onZoomIn,
+  onZoomOut,
+  onZoomReset,
+  size,
+}: ZoomControlsProps) {
   const sizeClasses = {
     small: 'p-1.5 text-xs',
     medium: 'p-2 text-sm',
@@ -207,11 +244,21 @@ function ZoomControls({ zoom, onZoomIn, onZoomOut, onZoomReset, size }: ZoomCont
         className={`${sizeClasses[size]} rounded-lg bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm`}
         title="縮小"
       >
-        <svg className={iconSizes[size]} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+        <svg
+          className={iconSizes[size]}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M20 12H4"
+          />
         </svg>
       </button>
-      
+
       <button
         onClick={onZoomReset}
         className={`${sizeClasses[size]} rounded-lg bg-white border border-gray-300 hover:bg-gray-50 transition-all shadow-sm font-medium min-w-[48px]`}
@@ -219,15 +266,25 @@ function ZoomControls({ zoom, onZoomIn, onZoomOut, onZoomReset, size }: ZoomCont
       >
         {Math.round(zoom * 100)}%
       </button>
-      
+
       <button
         onClick={onZoomIn}
         disabled={zoom >= 3}
         className={`${sizeClasses[size]} rounded-lg bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm`}
         title="放大"
       >
-        <svg className={iconSizes[size]} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+        <svg
+          className={iconSizes[size]}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M12 4v16m8-8H4"
+          />
         </svg>
       </button>
     </div>
@@ -241,7 +298,11 @@ interface FullscreenButtonProps {
   size: 'small' | 'medium' | 'large';
 }
 
-function FullscreenButton({ isFullscreen, onToggle, size }: FullscreenButtonProps) {
+function FullscreenButton({
+  isFullscreen,
+  onToggle,
+  size,
+}: FullscreenButtonProps) {
   const sizeClasses = {
     small: 'p-1.5',
     medium: 'p-2',
@@ -261,12 +322,32 @@ function FullscreenButton({ isFullscreen, onToggle, size }: FullscreenButtonProp
       title={isFullscreen ? '退出全螢幕' : '全螢幕檢視'}
     >
       {isFullscreen ? (
-        <svg className={iconSizes[size]} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9V4.5M9 9H4.5M9 9L3.5 3.5m5.5 11v4.5M9 15H4.5M9 15l-5.5 5.5m11-5.5v4.5m0-4.5h4.5m0 0l-5.5 5.5m5.5-11V4.5m0 4.5h-4.5m4.5 0l-5.5-5.5" />
+        <svg
+          className={iconSizes[size]}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M9 9V4.5M9 9H4.5M9 9L3.5 3.5m5.5 11v4.5M9 15H4.5M9 15l-5.5 5.5m11-5.5v4.5m0-4.5h4.5m0 0l-5.5 5.5m5.5-11V4.5m0 4.5h-4.5m4.5 0l-5.5-5.5"
+          />
         </svg>
       ) : (
-        <svg className={iconSizes[size]} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+        <svg
+          className={iconSizes[size]}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"
+          />
         </svg>
       )}
     </button>
@@ -281,7 +362,12 @@ interface QuickActionsProps {
   size: 'small' | 'medium' | 'large';
 }
 
-function QuickActions({ isLoading, onRefresh, onExport, size }: QuickActionsProps) {
+function QuickActions({
+  isLoading,
+  onRefresh,
+  onExport,
+  size,
+}: QuickActionsProps) {
   const sizeClasses = {
     small: 'p-1.5',
     medium: 'p-2',
@@ -302,23 +388,38 @@ function QuickActions({ isLoading, onRefresh, onExport, size }: QuickActionsProp
         className={`${sizeClasses[size]} rounded-lg bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm`}
         title="重新整理"
       >
-        <svg 
-          className={`${iconSizes[size]} ${isLoading ? 'animate-spin' : ''}`} 
-          fill="none" 
-          stroke="currentColor" 
+        <svg
+          className={`${iconSizes[size]} ${isLoading ? 'animate-spin' : ''}`}
+          fill="none"
+          stroke="currentColor"
           viewBox="0 0 24 24"
         >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+          />
         </svg>
       </button>
-      
+
       <button
         onClick={onExport}
         className={`${sizeClasses[size]} rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-all shadow-sm`}
         title="匯出投影片"
       >
-        <svg className={iconSizes[size]} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        <svg
+          className={iconSizes[size]}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+          />
         </svg>
       </button>
     </div>
@@ -331,8 +432,8 @@ function QuickActions({ isLoading, onRefresh, onExport, size }: QuickActionsProp
 export function PreviewControls({
   currentSlide,
   totalSlides,
-  theme,
-  mode,
+  theme: _theme,
+  mode: _mode,
   zoom,
   isFullscreen,
   isLoading = false,
@@ -344,16 +445,17 @@ export function PreviewControls({
   onZoomOut = () => {},
   onZoomReset = () => {},
   onFullscreenToggle = () => {},
-  onModeChange = () => {},
-  onThemeChange = () => {},
+  onModeChange: _onModeChange = () => {},
+  onThemeChange: _onThemeChange = () => {},
   onRefresh = () => {},
   onExport = () => {},
   className = '',
   size = 'medium',
 }: PreviewControlsProps) {
-
   return (
-    <div className={`preview-controls flex items-center justify-between gap-4 p-3 bg-gray-50 border-t border-gray-200 ${className}`}>
+    <div
+      className={`preview-controls flex items-center justify-between gap-4 p-3 bg-gray-50 border-t border-gray-200 ${className}`}
+    >
       {/* 左側：導航控制 */}
       <div className="flex items-center gap-3">
         {totalSlides > 0 && (
@@ -366,9 +468,9 @@ export function PreviewControls({
               canNavigate={canNavigate}
               size={size}
             />
-            
+
             <div className="w-px h-6 bg-gray-300" />
-            
+
             <SlideCounter
               currentSlide={currentSlide}
               totalSlides={totalSlides}
@@ -388,9 +490,9 @@ export function PreviewControls({
           onZoomReset={onZoomReset}
           size={size}
         />
-        
+
         <div className="w-px h-6 bg-gray-300" />
-        
+
         <FullscreenButton
           isFullscreen={isFullscreen}
           onToggle={onFullscreenToggle}
@@ -430,7 +532,9 @@ export function SimplePreviewControls({
   className = '',
 }: SimplePreviewControlsProps) {
   return (
-    <div className={`flex items-center justify-center gap-4 p-3 bg-gray-50 border-t border-gray-200 ${className}`}>
+    <div
+      className={`flex items-center justify-center gap-4 p-3 bg-gray-50 border-t border-gray-200 ${className}`}
+    >
       <NavigationButtons
         currentSlide={currentSlide}
         totalSlides={totalSlides}
@@ -439,7 +543,7 @@ export function SimplePreviewControls({
         canNavigate={true}
         size="medium"
       />
-      
+
       <SlideCounter
         currentSlide={currentSlide}
         totalSlides={totalSlides}
@@ -518,18 +622,18 @@ export function FloatingPreviewControls({
           canNavigate={true}
           size="small"
         />
-        
+
         <div className="w-px h-4 bg-white/30" />
-        
+
         <SlideCounter
           currentSlide={currentSlide}
           totalSlides={totalSlides}
           onGoToSlide={onGoToSlide}
           size="small"
         />
-        
+
         <div className="w-px h-4 bg-white/30" />
-        
+
         <FullscreenButton
           isFullscreen={isFullscreen}
           onToggle={onFullscreenToggle}

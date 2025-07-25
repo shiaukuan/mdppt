@@ -24,11 +24,6 @@ interface MarpRenderResult {
   html: string;
   css: string;
   comments: string[];
-  slides: Array<{
-    html: string;
-    background?: string;
-    backgroundImage?: string;
-  }>;
 }
 
 // 渲染結果介面
@@ -63,7 +58,7 @@ export class MarpClient {
    */
   private async initializeMarp(): Promise<void> {
     if (this.isInitialized) return;
-    
+
     if (this.initializationPromise) {
       return this.initializationPromise;
     }
@@ -79,23 +74,40 @@ export class MarpClient {
         throw new Error('Marp can only be initialized in browser environment');
       }
 
+      console.log('🔄 開始初始化 Marp Core...');
+
       // 動態匯入 Marp Core
+      console.log('📦 正在載入 @marp-team/marp-core...');
       const { Marp } = await import('@marp-team/marp-core');
+      console.log('✅ @marp-team/marp-core 載入成功');
+
       this.marpCore = Marp as any;
 
       // 建立 Marp 實例
+      console.log('🏗️ 正在建立 Marp 實例...');
+      if (!this.marpCore) {
+        throw new Error('Marp Core 類別未載入');
+      }
       this.marpInstance = new this.marpCore({
         html: true,
-        pagination: true,
         math: 'mathjax',
         inlineSVG: false,
-        slide: true,
       });
 
       this.isInitialized = true;
-      console.log('Marp Core initialized successfully');
+      console.log('🎉 Marp Core 初始化完成！');
     } catch (error) {
-      console.error('Failed to initialize Marp Core:', error);
+      console.error('❌ Marp Core 初始化失敗:', error);
+      console.error('錯誤詳情:', {
+        message: error instanceof Error ? error.message : '未知錯誤',
+        stack: error instanceof Error ? error.stack : '無堆疊資訊',
+        environment: {
+          isBrowser: typeof window !== 'undefined',
+          hasDocument: typeof document !== 'undefined',
+          userAgent:
+            typeof navigator !== 'undefined' ? navigator.userAgent : '未知',
+        },
+      });
       this.isInitialized = false;
       this.initializationPromise = null;
       throw new Error(MARP_ERROR_MESSAGES.INITIALIZATION_FAILED);
@@ -122,20 +134,20 @@ export class MarpClient {
    * 渲染 Markdown 為投影片
    */
   public async render(
-    markdown: string, 
+    markdown: string,
     config: Partial<MarpConfig> = {}
   ): Promise<SlideRenderResult> {
     try {
       // 確保已初始化
       await this.waitForInitialization();
-      
+
       if (!this.marpInstance) {
         throw new Error(MARP_ERROR_MESSAGES.INITIALIZATION_FAILED);
       }
 
       // 合併配置
       const fullConfig: MarpConfig = { ...DEFAULT_MARP_CONFIG, ...config };
-      
+
       // 檢查快取
       const cacheKey = this.generateCacheKey(markdown, fullConfig);
       const cached = this.cache.get(cacheKey);
@@ -143,21 +155,35 @@ export class MarpClient {
         return cached;
       }
 
-      // 套用主題
-      await this.applyTheme(fullConfig.theme, fullConfig.customCSS);
+      // 套用主題 - 暫時跳過，使用 Markdown front matter 代替
+      // await this.applyTheme(fullConfig.theme, fullConfig.customCSS);
+
+      // 只有在有自定義 CSS 時才嘗試套用主題
+      if (fullConfig.customCSS) {
+        try {
+          await this.applyTheme(fullConfig.theme, fullConfig.customCSS);
+        } catch (error) {
+          console.warn('自定義 CSS 設定失敗，繼續使用預設主題', error);
+        }
+      }
 
       // 準備 Markdown 內容
       const processedMarkdown = this.preprocessMarkdown(markdown, fullConfig);
 
       // 渲染
       const result = this.marpInstance.render(processedMarkdown);
-      
+
+      // 驗證渲染結果
+      if (!result) {
+        throw new Error('Marp 渲染返回了空結果');
+      }
+
       // 處理結果
       const slideResult = this.processRenderResult(result, fullConfig);
-      
+
       // 快取結果
       this.cache.set(cacheKey, slideResult);
-      
+
       // 清理舊快取
       this.cleanupCache();
 
@@ -169,7 +195,10 @@ export class MarpClient {
         css: '',
         slides: [],
         totalSlides: 0,
-        error: error instanceof Error ? error.message : MARP_ERROR_MESSAGES.RENDER_FAILED,
+        error:
+          error instanceof Error
+            ? error.message
+            : MARP_ERROR_MESSAGES.RENDER_FAILED,
       };
     }
   }
@@ -177,20 +206,29 @@ export class MarpClient {
   /**
    * 套用主題
    */
-  private async applyTheme(themeId: SupportedTheme, customCSS?: string): Promise<void> {
+  private async applyTheme(
+    themeId: SupportedTheme,
+    customCSS?: string
+  ): Promise<void> {
     if (!this.marpInstance) return;
 
     try {
       // 生成主題 CSS
       const themeCSS = themeManager.generateMarpTheme(themeId, customCSS);
-      
-      // 設定主題
-      this.marpInstance.themeSet.default(themeCSS);
-      
+
+      // 設定主題 - 正確的 Marp API 用法
+      if (this.marpInstance.themeSet && this.marpInstance.themeSet.add) {
+        // 使用 add 方法添加主題
+        this.marpInstance.themeSet.add(themeCSS);
+      } else {
+        console.warn('Marp themeSet API 不可用，跳過主題設定');
+      }
+
       console.log(`Applied theme: ${themeId}`);
     } catch (error) {
       console.error('Failed to apply theme:', error);
-      throw new Error(MARP_ERROR_MESSAGES.THEME_LOAD_FAILED);
+      // 不要拋出錯誤，讓渲染繼續進行
+      console.warn('主題設定失敗，使用預設主題繼續渲染');
     }
   }
 
@@ -211,9 +249,13 @@ export class MarpClient {
     }
 
     // 添加尺寸指令
-    const size = config.customSize || (config.size === 'custom' ? [1280, 720] : undefined);
+    const size =
+      config.customSize || (config.size === 'custom' ? [1280, 720] : undefined);
     if (size && !processed.includes('size:')) {
-      processed = processed.replace('---\n', `---\nsize: ${size[0]}x${size[1]}\n`);
+      processed = processed.replace(
+        '---\n',
+        `---\nsize: ${size[0]}x${size[1]}\n`
+      );
     }
 
     // 處理數學公式
@@ -228,16 +270,31 @@ export class MarpClient {
    * 處理渲染結果
    */
   private processRenderResult(
-    result: MarpRenderResult, 
+    result: MarpRenderResult,
     config: MarpConfig
   ): SlideRenderResult {
-    const slides: SlideData[] = result.slides.map((slide, index) => ({
-      html: slide.html,
-      index: index + 1,
-      background: slide.background,
-      backgroundImage: slide.backgroundImage,
-      title: this.extractSlideTitle(slide.html),
-    }));
+    // 除錯：記錄渲染結果結構
+    console.log('📋 處理渲染結果:', {
+      hasHtml: !!result.html,
+      hasCss: !!result.css,
+      comments: result.comments?.length || 0,
+      htmlLength: result.html?.length || 0,
+    });
+
+    // 從 HTML 解析投影片
+    const slides: SlideData[] = this.extractSlidesFromHtml(result.html);
+
+    if (slides.length === 0) {
+      console.warn('從 HTML 中未能解析到投影片，返回空結果');
+      return {
+        html: result.html || '',
+        css: result.css || '',
+        slides: [],
+        totalSlides: 0,
+        warnings: result.comments || [],
+        error: 'No slides could be extracted from rendered HTML',
+      };
+    }
 
     return {
       html: result.html,
@@ -249,11 +306,59 @@ export class MarpClient {
   }
 
   /**
+   * 從 HTML 中提取投影片資料
+   */
+  private extractSlidesFromHtml(html: string): SlideData[] {
+    if (!html) return [];
+
+    // 使用 DOMParser 解析 HTML
+    if (typeof window === 'undefined') {
+      console.warn('無法在非瀏覽器環境中解析 HTML');
+      return [];
+    }
+
+    try {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      const sections = doc.querySelectorAll('section');
+
+      return Array.from(sections).map((section, index) => {
+        const sectionHtml = section.outerHTML;
+        const style = section.getAttribute('style') || '';
+
+        // 提取背景相關資訊
+        const backgroundMatch = style.match(
+          /background[^;]*(?:url\([^)]+\)|[^;]+)/
+        );
+        const background = backgroundMatch ? backgroundMatch[0] : '';
+
+        const backgroundImageMatch = style.match(
+          /background-image:\s*url\([^)]+\)/
+        );
+        const backgroundImage = backgroundImageMatch
+          ? backgroundImageMatch[0]
+          : '';
+
+        return {
+          html: sectionHtml,
+          index: index + 1,
+          background,
+          backgroundImage,
+          title: this.extractSlideTitle(sectionHtml),
+        };
+      });
+    } catch (error) {
+      console.error('解析 HTML 時發生錯誤:', error);
+      return [];
+    }
+  }
+
+  /**
    * 提取投影片標題
    */
   private extractSlideTitle(html: string): string {
     const match = html.match(/<h[1-6][^>]*>(.*?)<\/h[1-6]>/);
-    if (match) {
+    if (match && match[1]) {
       return match[1].replace(/<[^>]*>/g, '').trim();
     }
     return `投影片`;
@@ -274,7 +379,7 @@ export class MarpClient {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
       const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash; // 轉換為 32 位整數
     }
     return hash.toString(36);
@@ -368,7 +473,7 @@ export async function renderSlidesSafely(
  */
 export async function preloadMarpCore(): Promise<boolean> {
   if (!isBrowser()) return false;
-  
+
   try {
     const client = getMarpClient();
     await client.waitForInitialization();

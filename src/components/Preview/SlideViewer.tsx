@@ -66,8 +66,18 @@ function NavigationControls({
         className="p-2 rounded-lg bg-black/80 text-white hover:bg-black/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
         title="上一張投影片 (←)"
       >
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M15 19l-7-7 7-7"
+          />
         </svg>
       </button>
 
@@ -112,8 +122,18 @@ function NavigationControls({
         className="p-2 rounded-lg bg-black/80 text-white hover:bg-black/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
         title="下一張投影片 (→)"
       >
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M9 5l7 7-7 7"
+          />
         </svg>
       </button>
     </div>
@@ -147,7 +167,11 @@ interface ViewModeSwitcherProps {
   className?: string;
 }
 
-function ViewModeSwitcher({ currentMode, onModeChange, className = '' }: ViewModeSwitcherProps) {
+function ViewModeSwitcher({
+  currentMode,
+  onModeChange,
+  className = '',
+}: ViewModeSwitcherProps) {
   const modes: Array<{ mode: PreviewMode; icon: string; title: string }> = [
     { mode: 'single', icon: '📄', title: '單頁檢視' },
     { mode: 'grid', icon: '⚏', title: '格狀檢視' },
@@ -230,8 +254,14 @@ function useFullscreen(elementRef: React.RefObject<HTMLElement>) {
 
     return () => {
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
-      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
-      document.removeEventListener('msfullscreenchange', handleFullscreenChange);
+      document.removeEventListener(
+        'webkitfullscreenchange',
+        handleFullscreenChange
+      );
+      document.removeEventListener(
+        'msfullscreenchange',
+        handleFullscreenChange
+      );
     };
   }, []);
 
@@ -266,7 +296,10 @@ export function SlideViewer({
   const { isFullscreen, toggleFullscreen } = useFullscreen(containerRef);
 
   // 確保索引有效
-  const validSlideIndex = Math.max(0, Math.min(currentSlideIndex, slides.length - 1));
+  const validSlideIndex = Math.max(
+    0,
+    Math.min(currentSlideIndex, slides.length - 1)
+  );
   const currentSlide = slides[validSlideIndex];
 
   // 導航函數
@@ -284,10 +317,13 @@ export function SlideViewer({
     }
   }, [validSlideIndex, slides.length, onSlideChange]);
 
-  const goToSlide = useCallback((index: number) => {
-    const validIndex = Math.max(0, Math.min(index, slides.length - 1));
-    onSlideChange?.(validIndex);
-  }, [slides.length, onSlideChange]);
+  const goToSlide = useCallback(
+    (index: number) => {
+      const validIndex = Math.max(0, Math.min(index, slides.length - 1));
+      onSlideChange?.(validIndex);
+    },
+    [slides.length, onSlideChange]
+  );
 
   // 鍵盤導航
   useEffect(() => {
@@ -329,13 +365,24 @@ export function SlideViewer({
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [enableKeyboardNavigation, goToPrevious, goToNext, goToSlide, slides.length, isFullscreen, toggleFullscreen]);
+  }, [
+    enableKeyboardNavigation,
+    goToPrevious,
+    goToNext,
+    goToSlide,
+    slides.length,
+    isFullscreen,
+    toggleFullscreen,
+  ]);
 
   // 模式變化處理
-  const handleModeChange = useCallback((newMode: PreviewMode) => {
-    setCurrentMode(newMode);
-    onModeChange?.(newMode);
-  }, [onModeChange]);
+  const handleModeChange = useCallback(
+    (newMode: PreviewMode) => {
+      setCurrentMode(newMode);
+      onModeChange?.(newMode);
+    },
+    [onModeChange]
+  );
 
   // 全螢幕狀態變化
   useEffect(() => {
@@ -345,7 +392,9 @@ export function SlideViewer({
   // 如果沒有投影片
   if (!slides.length) {
     return (
-      <div className={`flex items-center justify-center p-8 bg-gray-50 border border-gray-200 rounded-lg ${className}`}>
+      <div
+        className={`flex items-center justify-center p-8 bg-gray-50 border border-gray-200 rounded-lg ${className}`}
+      >
         <div className="text-center text-gray-500">
           <div className="text-4xl mb-4">📝</div>
           <div className="text-lg font-medium mb-2">無投影片內容</div>
@@ -358,20 +407,20 @@ export function SlideViewer({
   // 格狀檢視模式
   if (currentMode === 'grid') {
     return (
-      <div 
+      <div
         ref={containerRef}
         className={`slide-viewer grid-mode ${className} ${isFullscreen ? 'fullscreen' : ''}`}
       >
         <style dangerouslySetInnerHTML={{ __html: css }} />
-        
+
         {/* 控制列 */}
         {showControls && (
           <div className="sticky top-0 z-10 bg-white border-b border-gray-200 p-4 flex items-center justify-between">
-            <ViewModeSwitcher 
-              currentMode={currentMode} 
+            <ViewModeSwitcher
+              currentMode={currentMode}
               onModeChange={handleModeChange}
             />
-            
+
             <div className="flex items-center gap-4">
               <span className="text-sm text-gray-600">
                 共 {slides.length} 張投影片
@@ -397,20 +446,20 @@ export function SlideViewer({
                 handleModeChange('single');
               }}
               className={`relative border rounded-lg overflow-hidden hover:border-blue-500 transition-all group ${
-                index === validSlideIndex 
-                  ? 'border-blue-500 ring-2 ring-blue-200' 
+                index === validSlideIndex
+                  ? 'border-blue-500 ring-2 ring-blue-200'
                   : 'border-gray-200'
               }`}
               title={`投影片 ${index + 1}: ${slide.title || '無標題'}`}
             >
-              <div 
+              <div
                 className="w-full aspect-video text-xs transform scale-50 origin-top-left bg-white"
                 style={{ width: '200%', height: '200%' }}
                 dangerouslySetInnerHTML={{ __html: slide.html }}
               />
-              
+
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all" />
-              
+
               <div className="absolute bottom-2 left-2 right-2 bg-black/80 text-white text-xs px-2 py-1 rounded">
                 {index + 1}. {slide.title || '無標題'}
               </div>
@@ -423,19 +472,23 @@ export function SlideViewer({
 
   // 單頁檢視和簡報模式
   return (
-    <div 
+    <div
       ref={containerRef}
       className={`slide-viewer single-mode relative ${className} ${isFullscreen ? 'fullscreen' : ''} ${
-        currentMode === 'presentation' ? 'presentation-mode bg-black' : 'bg-white'
+        currentMode === 'presentation'
+          ? 'presentation-mode bg-black'
+          : 'bg-white'
       }`}
     >
       <style dangerouslySetInnerHTML={{ __html: css }} />
-      
+
       {/* 投影片內容 */}
       {currentSlide && (
-        <div className={`slide-content relative overflow-hidden ${
-          autoFit ? 'flex items-center justify-center' : ''
-        } ${currentMode === 'presentation' ? 'h-screen' : 'border border-gray-200 rounded-lg'}`}>
+        <div
+          className={`slide-content relative overflow-hidden ${
+            autoFit ? 'flex items-center justify-center' : ''
+          } ${currentMode === 'presentation' ? 'h-screen' : 'border border-gray-200 rounded-lg'}`}
+        >
           <div
             className={`marp-slide ${autoFit ? 'max-w-full max-h-full' : ''}`}
             dangerouslySetInnerHTML={{ __html: currentSlide.html }}
@@ -445,9 +498,13 @@ export function SlideViewer({
 
       {/* 控制面板 */}
       {showControls && (
-        <div className={`absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center gap-4 ${
-          currentMode === 'presentation' ? 'bg-black/80 text-white p-3 rounded-lg' : 'bg-white'
-        }`}>
+        <div
+          className={`absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center gap-4 ${
+            currentMode === 'presentation'
+              ? 'bg-black/80 text-white p-3 rounded-lg'
+              : 'bg-white'
+          }`}
+        >
           <NavigationControls
             currentSlide={validSlideIndex}
             totalSlides={slides.length}
@@ -456,8 +513,8 @@ export function SlideViewer({
             onGoToSlide={goToSlide}
           />
 
-          <ViewModeSwitcher 
-            currentMode={currentMode} 
+          <ViewModeSwitcher
+            currentMode={currentMode}
             onModeChange={handleModeChange}
           />
 
@@ -484,11 +541,13 @@ export function SlideViewer({
 
       {/* 投影片編號 */}
       {showSlideNumber && (
-        <div className={`absolute top-4 right-4 text-sm font-medium ${
-          currentMode === 'presentation' 
-            ? 'text-white bg-black/50 px-2 py-1 rounded' 
-            : 'text-gray-600'
-        }`}>
+        <div
+          className={`absolute top-4 right-4 text-sm font-medium ${
+            currentMode === 'presentation'
+              ? 'text-white bg-black/50 px-2 py-1 rounded'
+              : 'text-gray-600'
+          }`}
+        >
           {validSlideIndex + 1} / {slides.length}
         </div>
       )}

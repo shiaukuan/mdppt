@@ -16,21 +16,21 @@ import type { SupportedTheme, PreviewMode } from '@/lib/marp/config';
 export interface IntegratedPreviewProps {
   // 內容
   markdown: string;
-  
+
   // 初始設定
   initialTheme?: SupportedTheme;
   initialMode?: PreviewMode;
-  
+
   // 顯示選項
   showToolbar?: boolean;
   showControls?: boolean;
   showProgress?: boolean;
   toolbarPosition?: 'top' | 'bottom';
   controlsPosition?: 'top' | 'bottom' | 'floating';
-  
+
   // 樣式
   className?: string;
-  
+
   // 事件回調
   onThemeChange?: (theme: SupportedTheme) => void;
   onModeChange?: (mode: PreviewMode) => void;
@@ -59,14 +59,14 @@ export function IntegratedPreview({
   onError,
   onReady,
 }: IntegratedPreviewProps) {
-  
   const previewContainerRef = useRef<HTMLDivElement>(null);
-  
+
   // 使用預覽狀態管理
   const preview = usePreview({
     initialMarkdown: markdown,
     initialTheme,
     initialMode,
+    autoInitialize: true,
     fullscreenElement: previewContainerRef.current,
     ...(onThemeChange && { onThemeChange }),
     ...(onModeChange && { onModeChange }),
@@ -82,9 +82,12 @@ export function IntegratedPreview({
   }, [markdown, preview.markdown, preview.updateMarkdown]);
 
   // 導出處理
-  const handleExport = useCallback((format: 'pptx' | 'pdf' | 'html') => {
-    onExport?.(format);
-  }, [onExport]);
+  const handleExport = useCallback(
+    (format: 'pptx' | 'pdf' | 'html') => {
+      onExport?.(format);
+    },
+    [onExport]
+  );
 
   // 工具列組件
   const toolbar = showToolbar && (
@@ -141,60 +144,101 @@ export function IntegratedPreview({
   );
 
   // 浮動控制組件（用於全螢幕模式）
-  const floatingControls = controlsPosition === 'floating' && preview.hasSlides && (
-    <div className="absolute inset-0 pointer-events-none">
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 pointer-events-auto">
-        <div className="flex items-center gap-2 bg-black/80 text-white px-4 py-2 rounded-lg shadow-lg">
-          <button
-            onClick={preview.previousSlide}
-            disabled={preview.isFirstSlide}
-            className="p-1.5 rounded hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-            title="上一張"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          
-          <span className="px-2 text-sm font-medium">
-            {preview.currentSlideIndex + 1} / {preview.totalSlides}
-          </span>
-          
-          <button
-            onClick={preview.nextSlide}
-            disabled={preview.isLastSlide}
-            className="p-1.5 rounded hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-            title="下一張"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-          
-          <div className="w-px h-4 bg-white/30 mx-1" />
-          
-          <button
-            onClick={preview.toggleFullscreen}
-            className="p-1.5 rounded hover:bg-white/20 transition-all"
-            title={preview.isFullscreen ? '退出全螢幕' : '全螢幕'}
-          >
-            {preview.isFullscreen ? (
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9V4.5M9 9H4.5M9 9L3.5 3.5m5.5 11v4.5M9 15H4.5M9 15l-5.5 5.5m11-5.5v4.5m0-4.5h4.5m0 0l-5.5 5.5m5.5-11V4.5m0 4.5h-4.5m4.5 0l-5.5-5.5" />
+  const floatingControls = controlsPosition === 'floating' &&
+    preview.hasSlides && (
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 pointer-events-auto">
+          <div className="flex items-center gap-2 bg-black/80 text-white px-4 py-2 rounded-lg shadow-lg">
+            <button
+              onClick={preview.previousSlide}
+              disabled={preview.isFirstSlide}
+              className="p-1.5 rounded hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              title="上一張"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
               </svg>
-            ) : (
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+            </button>
+
+            <span className="px-2 text-sm font-medium">
+              {preview.currentSlideIndex + 1} / {preview.totalSlides}
+            </span>
+
+            <button
+              onClick={preview.nextSlide}
+              disabled={preview.isLastSlide}
+              className="p-1.5 rounded hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              title="下一張"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
               </svg>
-            )}
-          </button>
+            </button>
+
+            <div className="w-px h-4 bg-white/30 mx-1" />
+
+            <button
+              onClick={preview.toggleFullscreen}
+              className="p-1.5 rounded hover:bg-white/20 transition-all"
+              title={preview.isFullscreen ? '退出全螢幕' : '全螢幕'}
+            >
+              {preview.isFullscreen ? (
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 9V4.5M9 9H4.5M9 9L3.5 3.5m5.5 11v4.5M9 15H4.5M9 15l-5.5 5.5m11-5.5v4.5m0-4.5h4.5m0 0l-5.5 5.5m5.5-11V4.5m0 4.5h-4.5m4.5 0l-5.5-5.5"
+                  />
+                </svg>
+              ) : (
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"
+                  />
+                </svg>
+              )}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
 
   return (
-    <div 
+    <div
       ref={previewContainerRef}
       className={`integrated-preview flex flex-col h-full bg-gray-50 ${className}`}
     >
@@ -243,7 +287,8 @@ export function IntegratedPreview({
         {/* 狀態指示器 */}
         {preview.hasSlides && !preview.isLoading && (
           <div className="absolute top-4 left-4 bg-black/75 text-white px-2 py-1 rounded text-xs">
-            {preview.progress}% ({preview.currentSlideIndex + 1}/{preview.totalSlides})
+            {preview.progress}% ({preview.currentSlideIndex + 1}/
+            {preview.totalSlides})
           </div>
         )}
       </div>
@@ -308,7 +353,8 @@ export function SimpleIntegratedPreview({
 }
 
 // 響應式整合預覽（根據螢幕大小調整佈局）
-export interface ResponsiveIntegratedPreviewProps extends IntegratedPreviewProps {
+export interface ResponsiveIntegratedPreviewProps
+  extends IntegratedPreviewProps {
   mobileBreakpoint?: number;
 }
 

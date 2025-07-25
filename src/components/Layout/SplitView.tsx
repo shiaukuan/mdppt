@@ -34,42 +34,54 @@ export function SplitView({
   const [split, setSplit] = useState(defaultSplit);
   const [isDragging, setIsDragging] = useState(false);
 
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (!showResizer) return;
-    e.preventDefault();
-    setIsDragging(true);
-  }, [showResizer]);
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (!showResizer) return;
+      e.preventDefault();
+      setIsDragging(true);
+    },
+    [showResizer]
+  );
 
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (!isDragging || !containerRef.current) return;
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (!isDragging || !containerRef.current) return;
 
-    const container = containerRef.current;
-    const rect = container.getBoundingClientRect();
-    
-    let newSplit: number;
-    if (direction === 'horizontal') {
-      const mouseX = e.clientX - rect.left;
-      newSplit = (mouseX / rect.width) * 100;
-      
-      // 計算最小寬度限制
-      const minLeftPercent = (minLeftWidth / rect.width) * 100;
-      const minRightPercent = (minRightWidth / rect.width) * 100;
-      
-      newSplit = Math.max(minLeftPercent, Math.min(100 - minRightPercent, newSplit));
-    } else {
-      const mouseY = e.clientY - rect.top;
-      newSplit = (mouseY / rect.height) * 100;
-      
-      // 計算最小高度限制
-      const minLeftPercent = (minLeftWidth / rect.height) * 100;
-      const minRightPercent = (minRightWidth / rect.height) * 100;
-      
-      newSplit = Math.max(minLeftPercent, Math.min(100 - minRightPercent, newSplit));
-    }
+      const container = containerRef.current;
+      const rect = container.getBoundingClientRect();
 
-    setSplit(newSplit);
-    onSplitChange?.(newSplit);
-  }, [isDragging, direction, minLeftWidth, minRightWidth, onSplitChange]);
+      let newSplit: number;
+      if (direction === 'horizontal') {
+        const mouseX = e.clientX - rect.left;
+        newSplit = (mouseX / rect.width) * 100;
+
+        // 計算最小寬度限制
+        const minLeftPercent = (minLeftWidth / rect.width) * 100;
+        const minRightPercent = (minRightWidth / rect.width) * 100;
+
+        newSplit = Math.max(
+          minLeftPercent,
+          Math.min(100 - minRightPercent, newSplit)
+        );
+      } else {
+        const mouseY = e.clientY - rect.top;
+        newSplit = (mouseY / rect.height) * 100;
+
+        // 計算最小高度限制
+        const minLeftPercent = (minLeftWidth / rect.height) * 100;
+        const minRightPercent = (minRightWidth / rect.height) * 100;
+
+        newSplit = Math.max(
+          minLeftPercent,
+          Math.min(100 - minRightPercent, newSplit)
+        );
+      }
+
+      setSplit(newSplit);
+      onSplitChange?.(newSplit);
+    },
+    [isDragging, direction, minLeftWidth, minRightWidth, onSplitChange]
+  );
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
@@ -80,8 +92,9 @@ export function SplitView({
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
       document.body.style.userSelect = 'none';
-      document.body.style.cursor = direction === 'horizontal' ? 'col-resize' : 'row-resize';
-      
+      document.body.style.cursor =
+        direction === 'horizontal' ? 'col-resize' : 'row-resize';
+
       return () => {
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', handleMouseUp);
@@ -89,12 +102,12 @@ export function SplitView({
         document.body.style.cursor = '';
       };
     }
-    
+
     return undefined;
   }, [isDragging, handleMouseMove, handleMouseUp, direction]);
 
   const isHorizontal = direction === 'horizontal';
-  
+
   return (
     <div
       ref={containerRef}
@@ -106,10 +119,7 @@ export function SplitView({
     >
       {/* 左側/上方面板 */}
       <div
-        className={cn(
-          'overflow-hidden',
-          isHorizontal ? 'h-full' : 'w-full'
-        )}
+        className={cn('overflow-hidden', isHorizontal ? 'h-full' : 'w-full')}
         style={{
           [isHorizontal ? 'width' : 'height']: `${split}%`,
         }}
@@ -123,8 +133,8 @@ export function SplitView({
           className={cn(
             'bg-gray-200 hover:bg-gray-300 transition-colors cursor-pointer select-none',
             'flex items-center justify-center group',
-            isHorizontal 
-              ? 'w-1 h-full cursor-col-resize hover:w-2' 
+            isHorizontal
+              ? 'w-1 h-full cursor-col-resize hover:w-2'
               : 'h-1 w-full cursor-row-resize hover:h-2',
             isDragging && (isHorizontal ? 'w-2 bg-blue-400' : 'h-2 bg-blue-400')
           )}
@@ -142,10 +152,7 @@ export function SplitView({
 
       {/* 右側/下方面板 */}
       <div
-        className={cn(
-          'overflow-hidden',
-          isHorizontal ? 'h-full' : 'w-full'
-        )}
+        className={cn('overflow-hidden', isHorizontal ? 'h-full' : 'w-full')}
         style={{
           [isHorizontal ? 'width' : 'height']: `${100 - split}%`,
         }}
@@ -180,9 +187,7 @@ export function EditorSplitView({
         <div className="flex-shrink-0 px-4 py-2 bg-gray-50 border-b border-gray-200">
           <h3 className="text-sm font-medium text-gray-700">Markdown 編輯器</h3>
         </div>
-        <div className="flex-1 overflow-hidden">
-          {editor}
-        </div>
+        <div className="flex-1 overflow-hidden">{editor}</div>
       </div>
     ),
     rightPanel: (
@@ -190,9 +195,7 @@ export function EditorSplitView({
         <div className="flex-shrink-0 px-4 py-2 bg-gray-50 border-b border-gray-200">
           <h3 className="text-sm font-medium text-gray-700">投影片預覽</h3>
         </div>
-        <div className="flex-1 overflow-hidden">
-          {preview}
-        </div>
+        <div className="flex-1 overflow-hidden">{preview}</div>
       </div>
     ),
     defaultSplit,
@@ -201,7 +204,7 @@ export function EditorSplitView({
     ...(className && { className }),
     ...(onSplitChange && { onSplitChange }),
   };
-  
+
   return <SplitView {...splitViewProps} />;
 }
 
@@ -227,10 +230,10 @@ export function ResponsiveSplitView({
     const checkIsMobile = () => {
       setIsMobile(window.innerWidth < breakpoint);
     };
-    
+
     checkIsMobile();
     window.addEventListener('resize', checkIsMobile);
-    
+
     return () => window.removeEventListener('resize', checkIsMobile);
   }, [breakpoint]);
 
@@ -262,7 +265,7 @@ export function ResponsiveSplitView({
             預覽
           </button>
         </div>
-        
+
         {/* 內容區域 */}
         <div className="flex-1 overflow-hidden">
           {activeTab === 'editor' ? editor : preview}
@@ -278,6 +281,6 @@ export function ResponsiveSplitView({
     ...(className && { className }),
     ...(onSplitChange && { onSplitChange }),
   };
-  
+
   return <EditorSplitView {...editorSplitProps} />;
 }
